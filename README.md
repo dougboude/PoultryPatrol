@@ -111,6 +111,59 @@ Upload your own music to play while farming:
 - Corn piles disappear after 30 seconds
 - Game music respects walkman mode - your tunes take priority
 
+## 🚀 Production Deployment
+
+### Building for Production
+
+Create an optimized production build:
+
+```bash
+npm run build
+```
+
+This generates a `dist/` folder with:
+- Minified and bundled JavaScript
+- Optimized CSS
+- Compressed assets
+- Production-ready HTML
+
+### Testing the Production Build
+
+Preview the production build locally before deploying:
+
+```bash
+npm run preview
+```
+
+Opens the built game at `http://localhost:4173`
+
+### Deploying to itch.io
+
+1. **Build the game:**
+   ```bash
+   npm run build
+   ```
+
+2. **Prepare for upload:**
+   - Navigate to the `dist/` folder
+   - Select all files inside (index.html, assets/, etc.)
+   - Create a ZIP archive of these files
+
+3. **Upload to itch.io:**
+   - Go to [itch.io](https://itch.io) and create a new project
+   - Set "Kind of project" to **HTML**
+   - Upload your ZIP file
+   - Check "This file will be played in the browser"
+   - Set viewport dimensions (recommended: 1280x720 or fullscreen)
+   - Publish!
+
+### Deployment Notes
+
+- The game is fully self-contained (no CDN dependencies)
+- Works offline after initial load
+- User music is stored in browser's IndexedDB (not uploaded to server)
+- All assets are bundled and optimized by Vite
+
 ## 📝 License
 
 MIT
