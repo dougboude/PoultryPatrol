@@ -279,6 +279,29 @@ const walkmanSystem = {
             });
         }
         
+        // Clear All button
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', async () => {
+                if (this.playlist.length === 0) return;
+                
+                const confirmed = confirm(`Are you sure you want to delete all ${this.playlist.length} track(s)?\n\nThis will free up all storage space but cannot be undone.`);
+                if (!confirmed) return;
+                
+                try {
+                    await this.storageManager.clearAll();
+                    this.playlist = [];
+                    this.currentTrack = 0;
+                    this.renderManagementModal();
+                    this.renderPlaylist();
+                    alert('All music files have been removed.');
+                } catch (error) {
+                    console.error('Failed to clear all tracks:', error);
+                    alert(`Failed to clear music: ${error.message}`);
+                }
+            });
+        }
+        
         // Initial render
         this.renderManagementModal();
         this.renderPlaylist();
@@ -320,7 +343,15 @@ const walkmanSystem = {
                     
                 } catch (error) {
                     console.error(`Failed to add ${file.name}:`, error);
-                    alert(`Failed to add ${file.name}: ${error.message}`);
+                    
+                    // Provide helpful error message
+                    if (error.message.includes('Storage limit reached')) {
+                        const currentSize = await this.storageManager.getTotalSize();
+                        const currentMB = (currentSize / 1048576).toFixed(1);
+                        alert(`Storage Full!\n\nYou've used ${currentMB} MB of 50 MB.\n\nTo add more music:\n1. Delete some tracks using the × button\n2. Or click "Clear All Music" to start fresh\n\nCouldn't add: ${file.name}`);
+                    } else {
+                        alert(`Failed to add ${file.name}: ${error.message}`);
+                    }
                 }
             }
             
@@ -371,6 +402,7 @@ const walkmanSystem = {
         const emptyDiv = document.getElementById('emptyManagementPlaylist');
         const storageDiv = document.getElementById('storageUsage');
         const trackCountDiv = document.getElementById('trackCount');
+        const clearAllBtn = document.getElementById('clearAllBtn');
         
         if (!trackListDiv) return;
         
@@ -379,12 +411,27 @@ const walkmanSystem = {
             trackCountDiv.textContent = `${this.playlist.length} track${this.playlist.length !== 1 ? 's' : ''}`;
         }
         
-        // Update storage usage
+        // Update Clear All button state
+        if (clearAllBtn) {
+            clearAllBtn.disabled = this.playlist.length === 0;
+        }
+        
+        // Update storage usage with visual warnings
         if (storageDiv && this.storageManager) {
             this.storageManager.getTotalSize().then(size => {
                 const sizeMB = (size / 1048576).toFixed(1);
                 const maxMB = (this.storageManager.maxStorageSize / 1048576).toFixed(0);
-                storageDiv.textContent = `Storage: ${sizeMB} MB / ${maxMB} MB`;
+                const percentage = (size / this.storageManager.maxStorageSize) * 100;
+                
+                storageDiv.textContent = `Storage: ${sizeMB} MB / ${maxMB} MB (${percentage.toFixed(0)}%)`;
+                
+                // Add visual warnings
+                storageDiv.classList.remove('warning', 'danger');
+                if (percentage >= 90) {
+                    storageDiv.classList.add('danger');
+                } else if (percentage >= 70) {
+                    storageDiv.classList.add('warning');
+                }
             });
         }
         

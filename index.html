@@ -487,6 +487,48 @@
             border-radius: 5px;
         }
         
+        #storageUsage.warning {
+            color: #FFA500;
+            font-weight: bold;
+        }
+        
+        #storageUsage.danger {
+            color: #FF4444;
+            font-weight: bold;
+            animation: storageWarning 1s ease-in-out infinite;
+        }
+        
+        @keyframes storageWarning {
+            0%, 100% { background: rgba(255, 68, 68, 0.1); }
+            50% { background: rgba(255, 68, 68, 0.3); }
+        }
+        
+        .clear-all-btn {
+            width: 100%;
+            background: #FF4444;
+            color: white;
+            border: 2px solid #FF0000;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .clear-all-btn:hover {
+            background: #FF0000;
+            transform: scale(1.02);
+        }
+        
+        .clear-all-btn:disabled {
+            background: #333;
+            color: #666;
+            border-color: #444;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .close-management-btn {
             width: 100%;
             background: #333;
@@ -617,6 +659,7 @@
             <div id="emptyManagementPlaylist">No music added yet. Click + to add your MP3 files!</div>
         </div>
         <div id="storageUsage">Storage: 0 MB / 50 MB</div>
+        <button id="clearAllBtn" class="clear-all-btn">Clear All Music</button>
         <button id="closeManagementBtn" class="close-management-btn">Close</button>
     </div>
     
