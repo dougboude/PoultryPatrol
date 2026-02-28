@@ -629,9 +629,9 @@ const walkmanSystem = {
         const walkmanBtn = document.getElementById('walkman');
         
         if (mode === 'walkman') {
-            // Stop game music
-            if (audioSystem.audioContext) {
-                audioSystem.stopAllMusic();
+            // Mute game music (it continues playing silently)
+            if (audioSystem && audioSystem.audioContext && audioSystem.musicGainNode) {
+                audioSystem.musicGainNode.gain.setValueAtTime(0, audioSystem.audioContext.currentTime);
             }
             
             // Start walkman if playlist exists
@@ -640,13 +640,14 @@ const walkmanSystem = {
                 walkmanBtn.classList.add('playing');
             }
         } else {
+            // Switching back to game mode
             // Stop walkman
             this.audio.pause();
             walkmanBtn.classList.remove('playing');
             
-            // Resume game music (only if audioSystem is initialized)
-            if (audioSystem.audioContext) {
-                audioSystem.playBackgroundMusic();
+            // Unmute game music (it's still playing)
+            if (audioSystem && audioSystem.audioContext && audioSystem.musicGainNode) {
+                audioSystem.musicGainNode.gain.setValueAtTime(audioSystem.musicVolume, audioSystem.audioContext.currentTime);
             }
         }
         
@@ -695,9 +696,10 @@ const walkmanSystem = {
 };
 
 // Game state
-// Get game time from URL parameter (for testing), default to 10 minutes
+// Get URL parameters (for testing)
 const urlParams = new URLSearchParams(window.location.search);
 const gameTimeMinutes = parseFloat(urlParams.get('time')) || 10;
+const lizFreqParam = parseFloat(urlParams.get('lizFreq'));
 
 const gameState = {
     started: false,
@@ -3373,13 +3375,11 @@ document.getElementById('startBtn').addEventListener('click', () => {
     const walkmanBtn = document.getElementById('walkman');
     walkmanBtn.classList.remove('pre-game');
     
-    // Initialize audio system (but don't start music yet)
+    // Initialize audio system
     audioSystem.init();
     
-    // Only start game music if user is in game music mode
-    if (walkmanSystem.mode === 'game') {
-        audioSystem.playBackgroundMusic();
-    }
+    // Start game music using switchMusicMode (respects walkman mode)
+    audioSystem.switchMusicMode('calm');
     
     // Create player
     gameState.player = new Player();
@@ -3452,7 +3452,10 @@ let predatorSpawnTimer = 15;
 let hawkSpawnTimer = 25;
 
 // Spawn Liz (friendly visitor) randomly
-let visitorSpawnTimer = 180 + Math.random() * 120; // First visit between 3-5 minutes
+// Use lizFreq parameter if provided (in seconds), otherwise default to 3-5 minutes
+const lizMinTime = lizFreqParam ? lizFreqParam : 180; // Default 180 seconds (3 min)
+const lizMaxTime = lizFreqParam ? lizFreqParam + 10 : 300; // Default 300 seconds (5 min)
+let visitorSpawnTimer = lizMinTime + Math.random() * (lizMaxTime - lizMinTime);
 
 // Game loop
 const clock = new THREE.Clock();
@@ -3903,8 +3906,9 @@ function animate() {
         gameState.gameCompleted = true; // Prevent multiple alerts
         gameState.started = false; // Stop the game loop
         
-        // Stop music
+        // Stop all music and sound
         audioSystem.stopAllMusic();
+        walkmanSystem.audio.pause();
         
         // Clean up the scene - remove all game objects
         if (gameState.player) {
@@ -4031,8 +4035,9 @@ function animate() {
         gameState.gameCompleted = true; // Prevent multiple alerts
         gameState.started = false; // Stop the game loop
         
-        // Stop music
+        // Stop all music and sound
         audioSystem.stopAllMusic();
+        walkmanSystem.audio.pause();
         
         // Clean up the scene - remove all game objects
         if (gameState.player) {
@@ -4211,7 +4216,7 @@ function animate() {
     visitorSpawnTimer -= delta;
     if (visitorSpawnTimer <= 0 && !gameState.visitor) {
         gameState.visitor = new Visitor();
-        visitorSpawnTimer = 180 + Math.random() * 120; // Next visit in 3-5 minutes
+        visitorSpawnTimer = lizMinTime + Math.random() * (lizMaxTime - lizMinTime);
     }
     
     if (gameState.visitor) {
@@ -4222,7 +4227,7 @@ function animate() {
             gameState.visitor = null;
             
             // Reset spawn timer for next visit
-            visitorSpawnTimer = 180 + Math.random() * 120; // Next visit in 3-5 minutes
+            visitorSpawnTimer = lizMinTime + Math.random() * (lizMaxTime - lizMinTime);
             
             // Switch music back to appropriate mode
             if (walkmanSystem.mode === 'game') {

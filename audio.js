@@ -8,7 +8,7 @@ class AudioSystem {
         this.sfxGainNode = null;
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
-        this.currentMusicMode = 'calm';
+        this.currentMusicMode = null; // Start with no music mode
         this.musicTimeout = null;
         this.scheduledOscillators = []; // Track all scheduled oscillators
     }
@@ -60,22 +60,23 @@ class AudioSystem {
 
     // Stop all currently scheduled music
     stopAllMusic() {
-        // Stop all scheduled oscillators
-        const now = this.audioContext.currentTime;
-        this.scheduledOscillators.forEach(osc => {
-            try {
-                osc.stop(now);
-            } catch (e) {
-                // Oscillator may have already stopped
-            }
-        });
-        this.scheduledOscillators = [];
+        if (!this.audioContext) return;
         
-        // Clear timeout
+        // Clear timeout to prevent music from looping
         if (this.musicTimeout) {
             clearTimeout(this.musicTimeout);
             this.musicTimeout = null;
         }
+        
+        // Stop all scheduled oscillators
+        this.scheduledOscillators.forEach(osc => {
+            try {
+                osc.stop(0);
+            } catch (e) {
+                // Oscillator may have already stopped or not started
+            }
+        });
+        this.scheduledOscillators = [];
     }
 
     // Background music - upbeat arcade style melody
@@ -334,21 +335,44 @@ class AudioSystem {
     }
 
     // Switch music mode based on game state
-    switchMusicMode(mode) {
-        if (this.currentMusicMode === mode) return;
+    switchMusicMode(mode, forcePlay = false) {
+        // Don't switch if already in this mode (unless forced)
+        if (!forcePlay && this.currentMusicMode === mode) {
+            return;
+        }
         
+        // Always update the current mode (what SHOULD be playing)
+        const previousMode = this.currentMusicMode;
         this.currentMusicMode = mode;
         
-        // Stop all currently playing music
-        this.stopAllMusic();
+        // Check if we're in walkman mode
+        const isWalkmanMode = (typeof walkmanSystem !== 'undefined' && walkmanSystem.mode === 'walkman');
         
-        // Start the appropriate music
-        if (mode === 'danger') {
-            this.playDangerMusic();
-        } else if (mode === 'liz') {
-            this.playLizMusic();
+        if (isWalkmanMode) {
+            // In walkman mode - mute game music but let it continue
+            if (this.musicGainNode) {
+                this.musicGainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+            }
         } else {
-            this.playBackgroundMusic();
+            // In game mode - unmute and switch music if needed
+            if (this.musicGainNode) {
+                this.musicGainNode.gain.setValueAtTime(this.musicVolume, this.audioContext.currentTime);
+            }
+            
+            // Only restart music if we're switching to a different mode
+            if (previousMode !== mode) {
+                // Stop current music
+                this.stopAllMusic();
+                
+                // Start the appropriate music
+                if (mode === 'danger') {
+                    this.playDangerMusic();
+                } else if (mode === 'liz') {
+                    this.playLizMusic();
+                } else {
+                    this.playBackgroundMusic();
+                }
+            }
         }
     }
 
