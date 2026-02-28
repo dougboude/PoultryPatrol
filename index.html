@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poultry Patrol - Protect Your Flock!</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 18px;
+            pointer-events: none;
+        }
+        #scoreDisplay {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #FFD700;
+            border-radius: 8px;
+            padding: 8px 20px;
+            pointer-events: none;
+        }
+        #scoreLabel {
+            color: #FFD700;
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 3px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        #score {
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            color: #FF3333;
+            text-shadow: 0 0 10px #FF0000, 0 0 20px #FF0000;
+            letter-spacing: 5px;
+            text-align: center;
+            font-weight: bold;
+            background: #1a0000;
+            padding: 5px 15px;
+            border-radius: 4px;
+            border: 2px solid #330000;
+        }
+        #timerDisplay {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #4CAF50;
+            border-radius: 8px;
+            padding: 8px 20px;
+            pointer-events: none;
+        }
+        #timerLabel {
+            color: #4CAF50;
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 3px;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        #timer {
+            font-family: 'Courier New', monospace;
+            font-size: 32px;
+            color: #00FF00;
+            text-shadow: 0 0 10px #00FF00, 0 0 20px #00FF00;
+            letter-spacing: 5px;
+            text-align: center;
+            font-weight: bold;
+            background: #001a00;
+            padding: 5px 15px;
+            border-radius: 4px;
+            border: 2px solid #003300;
+        }
+        .score-change {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+        .score-positive {
+            color: #00FF00;
+            text-shadow: 0 0 10px #00FF00;
+        }
+        .score-negative {
+            color: #FF0000;
+            text-shadow: 0 0 10px #FF0000;
+        }
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+        #minimap {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        #lockIndicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #FFD700;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            display: none;
+            pointer-events: none;
+        }
+        #eggDisplay {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+        #eggBaskets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-width: 400px;
+            margin-top: 10px;
+        }
+        .basket {
+            text-align: center;
+            font-size: 14px;
+        }
+        .basket-icon {
+            font-size: 32px;
+        }
+        #coopPrompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            display: none;
+            pointer-events: none;
+        }
+        #coopTimer {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 20px;
+            display: none;
+            pointer-events: none;
+            text-align: center;
+        }
+        #instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+        }
+        #instructions.hidden {
+            display: none;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        
+        /* Walkman UI */
+        #walkman {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 3px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        #walkman:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.7);
+        }
+        
+        #walkman.playing {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+            50% { box-shadow: 0 4px 8px rgba(255,215,0,0.5), 0 0 20px rgba(255,215,0,0.3); }
+        }
+        
+        #playlist {
+            position: absolute;
+            bottom: 90px;
+            left: 20px;
+            width: 300px;
+            max-height: 400px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            padding: 15px;
+            display: none;
+            z-index: 999;
+        }
+        
+        #playlist.visible {
+            display: block;
+        }
+        
+        #playlistHeader {
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 10px;
+        }
+        
+        #musicMode {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            background: #333;
+            color: white;
+            border: 2px solid #666;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .mode-btn:hover {
+            background: #444;
+        }
+        
+        .mode-btn.active {
+            background: #FFD700;
+            color: black;
+            border-color: #FFD700;
+            font-weight: bold;
+        }
+        
+        #trackList {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .track {
+            padding: 10px;
+            margin: 5px 0;
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .track:hover {
+            background: #333;
+            border-color: #FFD700;
+        }
+        
+        .track.playing {
+            background: #FFD700;
+            color: black;
+            border-color: #FFD700;
+            font-weight: bold;
+        }
+        
+        .track.playing::before {
+            content: "▶ ";
+        }
+        
+        #emptyPlaylist {
+            color: #999;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+        
+        /* Yellow Glow Animation (Pre-Game) */
+        #walkman.pre-game {
+            animation: yellowGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes yellowGlow {
+            0%, 100% { 
+                box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+                border-color: #444;
+            }
+            50% { 
+                box-shadow: 0 4px 12px rgba(255,215,0,0.6), 0 0 20px rgba(255,215,0,0.4);
+                border-color: #FFD700;
+            }
+        }
+        
+        /* Management Modal (Pre-Game) */
+        #managementModal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            max-height: 500px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+            z-index: 1001;
+        }
+        
+        #managementModal.visible {
+            display: block;
+        }
+        
+        #managementHeader {
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 10px;
+        }
+        
+        #managementControls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .add-music-btn {
+            background: #FFD700;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .add-music-btn:hover {
+            background: #FFA500;
+            transform: scale(1.05);
+        }
+        
+        #trackCount {
+            color: #FFD700;
+            font-size: 14px;
+        }
+        
+        #managementTrackList {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        
+        .management-track {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 5px;
+            color: white;
+        }
+        
+        .management-track:hover {
+            background: #333;
+        }
+        
+        .track-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .track-delete-btn {
+            background: transparent;
+            color: #FF4444;
+            border: none;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 28px;
+            font-weight: bold;
+            line-height: 1;
+            transition: all 0.3s;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .track-delete-btn:hover {
+            color: #FF0000;
+            transform: scale(1.2);
+        }
+        
+        #emptyManagementPlaylist {
+            color: #999;
+            text-align: center;
+            padding: 40px 20px;
+            font-style: italic;
+        }
+        
+        #storageUsage {
+            color: #999;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+        }
+        
+        .close-management-btn {
+            width: 100%;
+            background: #333;
+            color: white;
+            border: 2px solid #666;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        .close-management-btn:hover {
+            background: #444;
+            border-color: #FFD700;
+        }
+        
+        /* Game Over Modal */
+        #gameOverModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        #gameOverModal.visible {
+            display: flex;
+        }
+        
+        #gameOverContent {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border: 4px solid #FFD700;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        
+        #gameOverTitle {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+        
+        #gameOverTitle.complete {
+            color: #4CAF50;
+        }
+        
+        #gameOverTitle.failed {
+            color: #FF3333;
+        }
+        
+        #finalScore {
+            font-size: 64px;
+            font-family: 'Courier New', monospace;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            margin: 20px 0;
+            letter-spacing: 5px;
+        }
+        
+        #gameOverStats {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #666;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .stat-line {
+            color: white;
+            font-size: 18px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .stat-label {
+            color: #FFD700;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+        }
+        
+        #playAgainBtn {
+            background: #FFD700;
+            color: black;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        }
+        
+        #playAgainBtn:hover {
+            background: #FFA500;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio element for MP3 playback -->
+    <audio id="walkmanAudio"></audio>
+    
+    <!-- Walkman Management Modal (Pre-Game) -->
+    <div id="managementModal">
+        <div id="managementHeader">🎵 WALKMAN - MUSIC LIBRARY 🎵</div>
+        <div id="managementControls">
+            <button id="addMusicBtn" class="add-music-btn">+ Add Music Files</button>
+            <span id="trackCount">0 tracks</span>
+        </div>
+        <div id="managementTrackList">
+            <div id="emptyManagementPlaylist">No music added yet. Click + to add your MP3 files!</div>
+        </div>
+        <div id="storageUsage">Storage: 0 MB / 50 MB</div>
+        <button id="closeManagementBtn" class="close-management-btn">Close</button>
+    </div>
+    
+    <!-- Walkman Playback Modal (In-Game) -->
+    <div id="walkman" class="pre-game" title="Music Player">🎧</div>
+    <div id="playlist">
+        <div id="playlistHeader">🎵 WALKMAN 🎵</div>
+        <div id="musicMode">
+            <button class="mode-btn active" data-mode="game">Game Music</button>
+            <button class="mode-btn" data-mode="walkman">My Playlist</button>
+        </div>
+        <div id="trackList">
+            <div id="emptyPlaylist">No MP3 files found.<br>Add .mp3 files to enable playlist.</div>
+        </div>
+    </div>
+    
+    <div id="scoreDisplay">
+        <div id="scoreLabel">SCORE</div>
+        <div id="score">0000000</div>
+    </div>
+    
+    <div id="timerDisplay">
+        <div id="timerLabel">TIME LEFT</div>
+        <div id="timer"></div>
+    </div>
+    
+    <script>
+        // Initialize timer from URL parameter immediately
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameTimeMinutes = parseFloat(urlParams.get('time')) || 10;
+        const maxGameTime = gameTimeMinutes * 60;
+        const minutes = Math.floor(maxGameTime / 60);
+        const seconds = Math.floor(maxGameTime % 60);
+        document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    </script>
+    
+    <div id="ui">
+        <div>Chickens: <span id="chickens">0</span> | Ducks: <span id="ducks">0</span></div>
+        <div>Ran Away: <span id="escaped">0</span> | Killed: <span id="killed">0</span></div>
+        <div>Predators Defeated: <span id="predators">0</span></div>
+        <div>Corn Charges: <span id="corn">5</span></div>
+    </div>
+    
+    <div id="eggDisplay">
+        <div style="font-size: 20px; font-weight: bold;">Total Eggs: <span id="totalEggs">0</span></div>
+        <div id="eggBaskets"></div>
+    </div>
+    
+    <div id="coopPrompt">Press E to enter coop</div>
+    
+    <div id="coopTimer"></div>
+    
+    <div id="lockIndicator">
+        🔒 Mouse Locked - Press ESC to unlock
+    </div>
+    
+    <canvas id="minimap"></canvas>
+    
+    <div id="instructions">
+        <h1>🐔 Poultry Patrol 🦆</h1>
+        <p>It's 2 PM and time to let the birds out!</p>
+        <p><strong>Your Mission:</strong> Keep your chickens and ducks safe for 10 minutes.</p>
+        <p><strong>Controls:</strong></p>
+        <p>WASD - Move | Click to Lock Mouse & Look Around | ESC to Unlock</p>
+        <p>Space - Scare/Push | C - Throw Corn | E - Enter/Exit Coop</p>
+        <p>Keep birds inside the yard boundaries and protect them from predators!</p>
+        <p>Use corn (5 charges) to call all birds to you - great for herding them back!</p>
+        <p>Collect eggs from the coop every 1 minute! Inside the coop, aim at eggs and click to collect.</p>
+        <p><strong>Optional:</strong> Click the 🎧 icon to add your own music before starting!</p>
+        <button id="startBtn">Open the Gate!</button>
+    </div>
+    
+    <!-- Game Over Modal -->
+    <div id="gameOverModal">
+        <div id="gameOverContent">
+            <div id="gameOverTitle"></div>
+            <div id="finalScore"></div>
+            <div id="gameOverStats"></div>
+            <button id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+</body>
+</html>
