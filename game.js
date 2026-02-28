@@ -167,6 +167,55 @@ const walkmanSystem = {
     isGameStarted: false, // Track game state
     storageManager: null, // Storage manager instance
     
+    // Custom modal functions
+    showConfirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('confirmModal');
+            const messageDiv = document.getElementById('confirmMessage');
+            const yesBtn = modal.querySelector('.confirm-btn.yes');
+            const noBtn = modal.querySelector('.confirm-btn.no');
+            
+            messageDiv.textContent = message;
+            modal.classList.add('visible');
+            
+            const handleYes = () => {
+                modal.classList.remove('visible');
+                yesBtn.removeEventListener('click', handleYes);
+                noBtn.removeEventListener('click', handleNo);
+                resolve(true);
+            };
+            
+            const handleNo = () => {
+                modal.classList.remove('visible');
+                yesBtn.removeEventListener('click', handleYes);
+                noBtn.removeEventListener('click', handleNo);
+                resolve(false);
+            };
+            
+            yesBtn.addEventListener('click', handleYes);
+            noBtn.addEventListener('click', handleNo);
+        });
+    },
+    
+    showAlert(message) {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('alertModal');
+            const messageDiv = document.getElementById('alertMessage');
+            const okBtn = modal.querySelector('.alert-btn');
+            
+            messageDiv.textContent = message;
+            modal.classList.add('visible');
+            
+            const handleOk = () => {
+                modal.classList.remove('visible');
+                okBtn.removeEventListener('click', handleOk);
+                resolve();
+            };
+            
+            okBtn.addEventListener('click', handleOk);
+        });
+    },
+    
     async init() {
         this.audio = document.getElementById('walkmanAudio');
         this.storageManager = new StorageManager();
@@ -286,7 +335,7 @@ const walkmanSystem = {
             clearAllBtn.addEventListener('click', async () => {
                 if (this.playlist.length === 0) return;
                 
-                const confirmed = confirm(`Are you sure you want to delete all ${this.playlist.length} track(s)?\n\nThis will free up all storage space but cannot be undone.`);
+                const confirmed = await this.showConfirm(`Are you sure you want to delete all ${this.playlist.length} track(s)?\n\nThis will free up all storage space but cannot be undone.`);
                 if (!confirmed) return;
                 
                 try {
@@ -295,10 +344,9 @@ const walkmanSystem = {
                     this.currentTrack = 0;
                     this.renderManagementModal();
                     this.renderPlaylist();
-                    alert('All music files have been removed.');
                 } catch (error) {
                     console.error('Failed to clear all tracks:', error);
-                    alert(`Failed to clear music: ${error.message}`);
+                    await this.showAlert(`Failed to clear music: ${error.message}`);
                 }
             });
         }
@@ -316,22 +364,18 @@ const walkmanSystem = {
         
         input.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
-            let addedCount = 0;
-            let skippedCount = 0;
             
             for (const file of files) {
                 // Validate file type
                 const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/ogg', 'audio/wav'];
                 if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|m4a|ogg|wav)$/i)) {
-                    alert(`Invalid file type: ${file.name}\nSupported formats: MP3, M4A, OGG, WAV`);
-                    skippedCount++;
+                    await this.showAlert(`Invalid file type: ${file.name}\n\nSupported formats: MP3, M4A, OGG, WAV`);
                     continue;
                 }
                 
                 // Check file size (10MB max per file)
                 if (file.size > 10485760) {
-                    alert(`File too large: ${file.name}\nMaximum size: 10MB per file`);
-                    skippedCount++;
+                    await this.showAlert(`File too large: ${file.name}\n\nMaximum size: 10MB per file`);
                     continue;
                 }
                 
@@ -344,14 +388,13 @@ const walkmanSystem = {
                     const fileMB = (file.size / 1048576).toFixed(1);
                     const remainingMB = (remainingSpace / 1048576).toFixed(1);
                     
-                    alert(`Not Enough Storage!\n\n` +
+                    await this.showAlert(`Not Enough Storage!\n\n` +
                           `File: ${file.name} (${fileMB} MB)\n` +
                           `Available: ${remainingMB} MB\n` +
                           `Used: ${currentMB} MB / 50 MB\n\n` +
                           `Please remove some tracks first:\n` +
                           `• Delete individual tracks with the × button\n` +
                           `• Or use "Clear All Music" to start fresh`);
-                    skippedCount++;
                     continue;
                 }
                 
@@ -367,8 +410,6 @@ const walkmanSystem = {
                         size: track.size
                     });
                     
-                    addedCount++;
-                    
                 } catch (error) {
                     console.error(`Failed to add ${file.name}:`, error);
                     
@@ -376,28 +417,16 @@ const walkmanSystem = {
                     if (error.message.includes('Storage limit reached')) {
                         const currentSize = await this.storageManager.getTotalSize();
                         const currentMB = (currentSize / 1048576).toFixed(1);
-                        alert(`Storage Full!\n\nYou've used ${currentMB} MB of 50 MB.\n\nTo add more music:\n1. Delete some tracks using the × button\n2. Or click "Clear All Music" to start fresh\n\nCouldn't add: ${file.name}`);
+                        await this.showAlert(`Storage Full!\n\nYou've used ${currentMB} MB of 50 MB.\n\nTo add more music:\n1. Delete some tracks using the × button\n2. Or click "Clear All Music" to start fresh\n\nCouldn't add: ${file.name}`);
                     } else {
-                        alert(`Failed to add ${file.name}: ${error.message}`);
+                        await this.showAlert(`Failed to add ${file.name}: ${error.message}`);
                     }
-                    skippedCount++;
                 }
             }
             
             // Update UI
             this.renderManagementModal();
             this.renderPlaylist();
-            
-            // Show summary if multiple files
-            if (files.length > 1) {
-                let message = '';
-                if (addedCount > 0) message += `Added ${addedCount} track(s)`;
-                if (skippedCount > 0) {
-                    if (message) message += '\n';
-                    message += `Skipped ${skippedCount} track(s)`;
-                }
-                if (message) alert(message);
-            }
         });
         
         input.click();

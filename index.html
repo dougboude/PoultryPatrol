@@ -690,6 +690,130 @@
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
         }
+        
+        /* Custom Confirmation Modal */
+        #confirmModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        
+        #confirmModal.visible {
+            display: flex;
+        }
+        
+        #confirmContent {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        #confirmMessage {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+        
+        #confirmButtons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .confirm-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .confirm-btn.yes {
+            background: #FF4444;
+            color: white;
+        }
+        
+        .confirm-btn.yes:hover {
+            background: #FF0000;
+            transform: scale(1.05);
+        }
+        
+        .confirm-btn.no {
+            background: #333;
+            color: white;
+            border: 2px solid #666;
+        }
+        
+        .confirm-btn.no:hover {
+            background: #444;
+            border-color: #FFD700;
+        }
+        
+        /* Custom Alert Modal */
+        #alertModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        
+        #alertModal.visible {
+            display: flex;
+        }
+        
+        #alertContent {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border: 3px solid #FFD700;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        #alertMessage {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+        
+        .alert-btn {
+            padding: 12px 40px;
+            font-size: 16px;
+            background: #FFD700;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .alert-btn:hover {
+            background: #FFA500;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -792,6 +916,25 @@
             <div id="finalScore"></div>
             <div id="gameOverStats"></div>
             <button id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+    
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal">
+        <div id="confirmContent">
+            <div id="confirmMessage"></div>
+            <div id="confirmButtons">
+                <button class="confirm-btn no">Cancel</button>
+                <button class="confirm-btn yes">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Custom Alert Modal -->
+    <div id="alertModal">
+        <div id="alertContent">
+            <div id="alertMessage"></div>
+            <button class="alert-btn">OK</button>
         </div>
     </div>
 

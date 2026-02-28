@@ -54,10 +54,22 @@ http://localhost:5173/?time=0.5   # 30 second game
 
 Upload your own music to play while farming:
 
-1. Press **M** to open the walkman
-2. Click "Add Tracks" to upload MP3 files
-3. Your playlist is saved in browser storage
-4. Music persists between sessions
+1. Before starting the game, click the **🎧** icon to manage your music library
+2. Click **"+ Add Music Files"** to upload MP3, M4A, OGG, or WAV files
+3. View storage usage with a visual progress bar (50 MB limit)
+4. Each track shows its file size - easily identify large files
+5. Delete individual tracks with the **×** button
+6. Use **"Clear All Music"** to remove all tracks at once
+7. During gameplay, press **M** to switch between game music and your playlist
+8. Your playlist is saved in browser storage and persists between sessions
+
+### Storage Management
+
+- **50 MB total storage** for all music files
+- **10 MB maximum** per individual file
+- Visual warnings when storage is 70% full (orange) or 90% full (red)
+- Pre-upload validation prevents adding files that won't fit
+- Easy cleanup with individual delete or clear all options
 
 ## 🏆 Scoring
 
