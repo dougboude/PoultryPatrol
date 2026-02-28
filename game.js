@@ -204,7 +204,8 @@ const walkmanSystem = {
             this.playlist = tracks.map(track => ({
                 id: track.id,
                 title: track.title,
-                objectURL: URL.createObjectURL(track.blob)
+                objectURL: URL.createObjectURL(track.blob),
+                size: track.size
             }));
         } catch (error) {
             console.error('Failed to load playlist:', error);
@@ -315,18 +316,42 @@ const walkmanSystem = {
         
         input.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
+            let addedCount = 0;
+            let skippedCount = 0;
             
             for (const file of files) {
                 // Validate file type
                 const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/ogg', 'audio/wav'];
                 if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|m4a|ogg|wav)$/i)) {
                     alert(`Invalid file type: ${file.name}\nSupported formats: MP3, M4A, OGG, WAV`);
+                    skippedCount++;
                     continue;
                 }
                 
                 // Check file size (10MB max per file)
                 if (file.size > 10485760) {
-                    alert(`File too large: ${file.name}\nMaximum size: 10MB`);
+                    alert(`File too large: ${file.name}\nMaximum size: 10MB per file`);
+                    skippedCount++;
+                    continue;
+                }
+                
+                // PRE-UPLOAD VALIDATION: Check if file will fit in remaining storage
+                const currentSize = await this.storageManager.getTotalSize();
+                const remainingSpace = this.storageManager.maxStorageSize - currentSize;
+                
+                if (file.size > remainingSpace) {
+                    const currentMB = (currentSize / 1048576).toFixed(1);
+                    const fileMB = (file.size / 1048576).toFixed(1);
+                    const remainingMB = (remainingSpace / 1048576).toFixed(1);
+                    
+                    alert(`Not Enough Storage!\n\n` +
+                          `File: ${file.name} (${fileMB} MB)\n` +
+                          `Available: ${remainingMB} MB\n` +
+                          `Used: ${currentMB} MB / 50 MB\n\n` +
+                          `Please remove some tracks first:\n` +
+                          `• Delete individual tracks with the × button\n` +
+                          `• Or use "Clear All Music" to start fresh`);
+                    skippedCount++;
                     continue;
                 }
                 
@@ -338,8 +363,11 @@ const walkmanSystem = {
                     this.playlist.push({
                         id: track.id,
                         title: track.title,
-                        objectURL: URL.createObjectURL(track.blob)
+                        objectURL: URL.createObjectURL(track.blob),
+                        size: track.size
                     });
+                    
+                    addedCount++;
                     
                 } catch (error) {
                     console.error(`Failed to add ${file.name}:`, error);
@@ -352,12 +380,24 @@ const walkmanSystem = {
                     } else {
                         alert(`Failed to add ${file.name}: ${error.message}`);
                     }
+                    skippedCount++;
                 }
             }
             
             // Update UI
             this.renderManagementModal();
             this.renderPlaylist();
+            
+            // Show summary if multiple files
+            if (files.length > 1) {
+                let message = '';
+                if (addedCount > 0) message += `Added ${addedCount} track(s)`;
+                if (skippedCount > 0) {
+                    if (message) message += '\n';
+                    message += `Skipped ${skippedCount} track(s)`;
+                }
+                if (message) alert(message);
+            }
         });
         
         input.click();
@@ -401,6 +441,7 @@ const walkmanSystem = {
         const trackListDiv = document.getElementById('managementTrackList');
         const emptyDiv = document.getElementById('emptyManagementPlaylist');
         const storageDiv = document.getElementById('storageUsage');
+        const storageBarFill = document.getElementById('storageBarFill');
         const trackCountDiv = document.getElementById('trackCount');
         const clearAllBtn = document.getElementById('clearAllBtn');
         
@@ -416,7 +457,7 @@ const walkmanSystem = {
             clearAllBtn.disabled = this.playlist.length === 0;
         }
         
-        // Update storage usage with visual warnings
+        // Update storage usage with visual warnings and progress bar
         if (storageDiv && this.storageManager) {
             this.storageManager.getTotalSize().then(size => {
                 const sizeMB = (size / 1048576).toFixed(1);
@@ -425,7 +466,19 @@ const walkmanSystem = {
                 
                 storageDiv.textContent = `Storage: ${sizeMB} MB / ${maxMB} MB (${percentage.toFixed(0)}%)`;
                 
-                // Add visual warnings
+                // Update progress bar
+                if (storageBarFill) {
+                    storageBarFill.style.width = `${percentage}%`;
+                    storageBarFill.classList.remove('warning', 'danger');
+                    
+                    if (percentage >= 90) {
+                        storageBarFill.classList.add('danger');
+                    } else if (percentage >= 70) {
+                        storageBarFill.classList.add('warning');
+                    }
+                }
+                
+                // Add visual warnings to text
                 storageDiv.classList.remove('warning', 'danger');
                 if (percentage >= 90) {
                     storageDiv.classList.add('danger');
@@ -445,14 +498,25 @@ const walkmanSystem = {
         if (emptyDiv) emptyDiv.style.display = 'none';
         trackListDiv.innerHTML = '';
         
-        // Render tracks with delete buttons
+        // Render tracks with delete buttons and file sizes
         this.playlist.forEach((track) => {
             const trackDiv = document.createElement('div');
             trackDiv.className = 'management-track';
             
-            const titleSpan = document.createElement('span');
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'track-info';
+            
+            const titleSpan = document.createElement('div');
             titleSpan.textContent = track.title;
             titleSpan.className = 'track-title';
+            
+            const sizeSpan = document.createElement('div');
+            sizeSpan.className = 'track-size';
+            const sizeMB = (track.size / 1048576).toFixed(2);
+            sizeSpan.textContent = `${sizeMB} MB`;
+            
+            infoDiv.appendChild(titleSpan);
+            infoDiv.appendChild(sizeSpan);
             
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '×';
@@ -462,7 +526,7 @@ const walkmanSystem = {
                 this.removeTrack(track.id);
             });
             
-            trackDiv.appendChild(titleSpan);
+            trackDiv.appendChild(infoDiv);
             trackDiv.appendChild(deleteBtn);
             trackListDiv.appendChild(trackDiv);
         });

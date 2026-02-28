@@ -441,11 +441,23 @@
             background: #333;
         }
         
-        .track-title {
+        .track-info {
             flex: 1;
+            overflow: hidden;
+            margin-right: 10px;
+        }
+        
+        .track-title {
+            display: block;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            margin-bottom: 3px;
+        }
+        
+        .track-size {
+            font-size: 11px;
+            color: #999;
         }
         
         .track-delete-btn {
@@ -477,11 +489,15 @@
             font-style: italic;
         }
         
+        #storageInfo {
+            margin-bottom: 15px;
+        }
+        
         #storageUsage {
             color: #999;
             font-size: 12px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             padding: 5px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 5px;
@@ -501,6 +517,38 @@
         @keyframes storageWarning {
             0%, 100% { background: rgba(255, 68, 68, 0.1); }
             50% { background: rgba(255, 68, 68, 0.3); }
+        }
+        
+        #storageBar {
+            width: 100%;
+            height: 20px;
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #storageBarFill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s ease, background 0.3s ease;
+            width: 0%;
+            border-radius: 8px;
+        }
+        
+        #storageBarFill.warning {
+            background: linear-gradient(90deg, #FFA500, #FFD700);
+        }
+        
+        #storageBarFill.danger {
+            background: linear-gradient(90deg, #FF4444, #FF6666);
+            animation: barPulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes barPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
         
         .clear-all-btn {
@@ -658,7 +706,12 @@
         <div id="managementTrackList">
             <div id="emptyManagementPlaylist">No music added yet. Click + to add your MP3 files!</div>
         </div>
-        <div id="storageUsage">Storage: 0 MB / 50 MB</div>
+        <div id="storageInfo">
+            <div id="storageUsage">Storage: 0 MB / 50 MB (0%)</div>
+            <div id="storageBar">
+                <div id="storageBarFill"></div>
+            </div>
+        </div>
         <button id="clearAllBtn" class="clear-all-btn">Clear All Music</button>
         <button id="closeManagementBtn" class="close-management-btn">Close</button>
     </div>
