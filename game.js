@@ -767,7 +767,7 @@ const groundGeometry = new THREE.PlaneGeometry(64, 64);
 // Load grass texture from image file
 const textureLoader = new THREE.TextureLoader();
 const grassTexture = textureLoader.load(
-    'assets/textures/grass.jpg',
+    'grass.png',
     // Success callback
     (texture) => {
         // Grass texture loaded successfully
@@ -1037,7 +1037,7 @@ gameState.coopPosition = coopGroup.position;
 
 // Duck pond
 const pondGeometry = new THREE.CircleGeometry(5, 32);
-const waterTexture = textureLoader.load('assets/textures/water.jpg');
+const waterTexture = textureLoader.load('water.png');
 waterTexture.wrapS = THREE.RepeatWrapping;
 waterTexture.wrapT = THREE.RepeatWrapping;
 waterTexture.repeat.set(2, 2);
@@ -1755,13 +1755,13 @@ class Player {
 let chickenFeatherTexture = null;
 let duckFeatherTexture = null;
 
-textureLoader.load('assets/textures/chicken-feathers.jpg', 
+textureLoader.load('chicken-feathers.png', 
     (texture) => { chickenFeatherTexture = texture; },
     undefined,
     (error) => { console.error('Chicken texture failed to load:', error); }
 );
 
-textureLoader.load('assets/textures/duck-feathers.jpg', 
+textureLoader.load('duck-feathers.png', 
     (texture) => { duckFeatherTexture = texture; },
     undefined,
     (error) => { console.error('Duck texture failed to load:', error); }
@@ -1769,7 +1769,7 @@ textureLoader.load('assets/textures/duck-feathers.jpg',
 
 // Load sweater texture for player
 let sweaterTexture = null;
-textureLoader.load('assets/textures/sweater.jpg',
+textureLoader.load('sweater.png',
     (texture) => { sweaterTexture = texture; },
     undefined,
     (error) => { /* Sweater texture failed to load, using solid color */ }
@@ -1777,7 +1777,7 @@ textureLoader.load('assets/textures/sweater.jpg',
 
 // Load pants texture for player
 let pantsTexture = null;
-textureLoader.load('assets/textures/pants.jpg',
+textureLoader.load('pants.png',
     (texture) => { pantsTexture = texture; },
     undefined,
     (error) => { /* Pants texture failed to load, using solid color */ }
@@ -1785,7 +1785,7 @@ textureLoader.load('assets/textures/pants.jpg',
 
 // Load staff texture for player
 let staffTexture = null;
-textureLoader.load('assets/textures/staff.jpg',
+textureLoader.load('staff.png',
     (texture) => { staffTexture = texture; },
     undefined,
     (error) => { /* Staff texture failed to load, using solid color */ }
@@ -1793,7 +1793,7 @@ textureLoader.load('assets/textures/staff.jpg',
 
 // Load hair texture for player
 let hairTexture = null;
-textureLoader.load('assets/textures/hair.jpg',
+textureLoader.load('hair.png',
     (texture) => { hairTexture = texture; },
     undefined,
     (error) => { /* Hair texture failed to load, using solid color */ }
@@ -1801,7 +1801,7 @@ textureLoader.load('assets/textures/hair.jpg',
 
 // Load dog hair texture
 let dogHairTexture = null;
-textureLoader.load('assets/textures/doghair.jpg',
+textureLoader.load('doghair.png',
     (texture) => { dogHairTexture = texture; },
     undefined,
     (error) => { /* Dog hair texture failed to load, using solid color */ }
@@ -1809,7 +1809,7 @@ textureLoader.load('assets/textures/doghair.jpg',
 
 // Load hawk feather texture
 let hawkFeatherTexture = null;
-textureLoader.load('assets/textures/hawk-feathers.jpg',
+textureLoader.load('hawk-feathers.png',
     (texture) => { hawkFeatherTexture = texture; },
     undefined,
     (error) => { /* Hawk feather texture failed to load, using solid color */ }
@@ -1817,7 +1817,7 @@ textureLoader.load('assets/textures/hawk-feathers.jpg',
 
 // Load corn texture
 let cornTexture = null;
-textureLoader.load('assets/textures/corn.jpg',
+textureLoader.load('corn.png',
     (texture) => { cornTexture = texture; },
     undefined,
     (error) => { /* Corn texture failed to load, using solid color */ }
@@ -3312,8 +3312,8 @@ let cameraAngleV = 0.3; // Vertical angle (start slightly looking down)
 let isPointerLocked = false;
 
 window.addEventListener('mousemove', (e) => {
-    // Only update camera if pointer is locked
-    if (isPointerLocked) {
+    // Only update camera if pointer is locked AND inside the coop
+    if (isPointerLocked && gameState.inCoop) {
         // Calculate mouse movement delta
         const deltaX = e.movementX || 0;
         const deltaY = e.movementY || 0;
@@ -3331,7 +3331,9 @@ window.addEventListener('mousemove', (e) => {
 document.addEventListener('pointerlockchange', () => {
     isPointerLocked = document.pointerLockElement === renderer.domElement;
     const lockIndicator = document.getElementById('lockIndicator');
-    if (isPointerLocked) {
+    
+    // Only show lock indicator when in coop
+    if (isPointerLocked && gameState.inCoop) {
         lockIndicator.style.display = 'block';
     } else {
         lockIndicator.style.display = 'none';
@@ -3347,12 +3349,12 @@ document.addEventListener('pointerlockchange', () => {
 
 // Request pointer lock on click
 renderer.domElement.addEventListener('click', () => {
-    // Only lock pointer if game has started
+    // Only lock pointer if game has started AND we're in the coop
     if (!gameState.started) {
         return;
     }
     
-    if (!isPointerLocked && !gameState.inCoop) {
+    if (!isPointerLocked && gameState.inCoop) {
         renderer.domElement.requestPointerLock();
     } else if (gameState.inCoop && gameState.eggsAvailable) {
         // Collect egg when in coop
@@ -3452,9 +3454,9 @@ let predatorSpawnTimer = 15;
 let hawkSpawnTimer = 25;
 
 // Spawn Liz (friendly visitor) randomly
-// Use lizFreq parameter if provided (in seconds), otherwise default to 3-5 minutes
-const lizMinTime = lizFreqParam ? lizFreqParam : 180; // Default 180 seconds (3 min)
-const lizMaxTime = lizFreqParam ? lizFreqParam + 10 : 300; // Default 300 seconds (5 min)
+// Use lizFreq parameter if provided (in seconds), otherwise default to 1-2 minutes
+const lizMinTime = lizFreqParam ? lizFreqParam : 60; // Default 60 seconds (1 min)
+const lizMaxTime = lizFreqParam ? lizFreqParam + 10 : 120; // Default 120 seconds (2 min)
 let visitorSpawnTimer = lizMinTime + Math.random() * (lizMaxTime - lizMinTime);
 
 // Game loop
