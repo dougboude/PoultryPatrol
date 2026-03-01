@@ -11,7 +11,7 @@ You're a shepherd tasked with keeping your poultry safe for 10 minutes. Feed you
 - **Dynamic Flock Management**: Chickens lay eggs that hatch into more chickens, ducks swim in the pond
 - **Predator Threats**: Fend off hawks and dogs that hunt your birds
 - **Corn Feeding System**: Throw corn to keep your birds happy and healthy
-- **Special Visitor**: Liz drops by every 3-5 minutes to sit with the birds (they love her!)
+- **Special Visitor**: Liz drops by every 1-2 minutes to sit with the birds (they love her!)
 - **Walkman Mode**: Upload your own MP3s and jam while you farm
 - **Minimap Radar**: Track all birds, predators, and visitors in real-time
 - **First-Person Controls**: WASD movement with mouse-look perspective
@@ -139,22 +139,29 @@ Opens the built game at `http://localhost:4173`
 
 ### Deploying to itch.io
 
-1. **Build the game:**
+1. **Build and package:**
    ```bash
    npm run build
    ```
+   This creates the `dist/` folder with all optimized files.
 
-2. **Prepare for upload:**
-   - Navigate to the `dist/` folder
-   - Select all files inside (index.html, assets/, etc.)
-   - Create a ZIP archive of these files
+2. **Create ZIP for upload:**
+   ```bash
+   # Windows PowerShell
+   Compress-Archive -Path dist/* -DestinationPath poultry-patrol.zip -Force
+   
+   # Mac/Linux
+   cd dist && zip -r ../poultry-patrol.zip * && cd ..
+   ```
 
 3. **Upload to itch.io:**
    - Go to [itch.io](https://itch.io) and create a new project
    - Set "Kind of project" to **HTML**
-   - Upload your ZIP file
+   - Upload `poultry-patrol.zip`
    - Check "This file will be played in the browser"
-   - Set viewport dimensions (recommended: 1280x720 or fullscreen)
+   - Set viewport dimensions (recommended: 1280x720)
+   - Disable "Fullscreen button" (can cause focus issues)
+   - Leave "SharedArrayBuffer support" unchecked
    - Publish!
 
 ### Deployment Notes
