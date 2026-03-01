@@ -27,6 +27,7 @@ yarn-error.log*
 # Build outputs (if we add a build step later)
 dist/
 build/
+*.zip
 
 # Temporary files
 ~
